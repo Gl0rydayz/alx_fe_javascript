@@ -384,6 +384,184 @@ function addQuote() {
     showRandomQuote();
 }
 
+// Function to dynamically create the add quote form
+function createAddQuoteForm() {
+    // Check if form already exists
+    const existingForm = document.querySelector('.add-quote-form-container');
+    if (existingForm) {
+        return; // Form already exists
+    }
+    
+    // Create form container
+    const formContainer = document.createElement('div');
+    formContainer.className = 'add-quote-form-container';
+    formContainer.style.cssText = `
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 30px;
+        margin-bottom: 20px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    `;
+    
+    // Create form title
+    const formTitle = document.createElement('h3');
+    formTitle.textContent = 'Add New Quote';
+    formTitle.style.cssText = `
+        margin-top: 0;
+        margin-bottom: 20px;
+        text-align: center;
+    `;
+    
+    // Create quote text input
+    const quoteTextInput = document.createElement('input');
+    quoteTextInput.type = 'text';
+    quoteTextInput.placeholder = 'Enter a new quote';
+    quoteTextInput.id = 'dynamicQuoteText';
+    quoteTextInput.style.cssText = `
+        width: 100%;
+        padding: 12px;
+        margin: 5px 0;
+        border: none;
+        border-radius: 8px;
+        font-size: 1em;
+        background: rgba(255, 255, 255, 0.9);
+        color: #333;
+        margin-bottom: 15px;
+    `;
+    
+    // Create category input
+    const categoryInput = document.createElement('input');
+    categoryInput.type = 'text';
+    categoryInput.placeholder = 'Enter quote category';
+    categoryInput.id = 'dynamicQuoteCategory';
+    categoryInput.style.cssText = `
+        width: 100%;
+        padding: 12px;
+        margin: 5px 0;
+        border: none;
+        border-radius: 8px;
+        font-size: 1em;
+        background: rgba(255, 255, 255, 0.9);
+        color: #333;
+        margin-bottom: 20px;
+    `;
+    
+    // Create add button
+    const addButton = document.createElement('button');
+    addButton.textContent = 'Add Quote';
+    addButton.style.cssText = `
+        background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 1em;
+        width: 100%;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    `;
+    
+    // Add event listener to the button
+    addButton.addEventListener('click', function() {
+        const text = quoteTextInput.value.trim();
+        const category = categoryInput.value.trim();
+        
+        if (!text || !category) {
+            alert('Please enter both quote text and category.');
+            return;
+        }
+        
+        // Create new quote object
+        const newQuote = { text, category };
+        
+        // Add to quotes array
+        quotes.push(newQuote);
+        
+        // Update filtered quotes if needed
+        if (categoryFilter.value === 'all' || categoryFilter.value === category) {
+            filteredQuotes.push(newQuote);
+        }
+        
+        // Save to local storage
+        saveQuotesToLocalStorage();
+        
+        // Clear form inputs
+        quoteTextInput.value = '';
+        categoryInput.value = '';
+        
+        // Update category filter options
+        updateCategoryFilter();
+        
+        // Update stats
+        updateStats();
+        
+        // Show success message
+        displayMessage(`Quote added successfully! Total quotes: ${quotes.length}`, 'success');
+        
+        // Show the new quote
+        currentQuoteIndex = filteredQuotes.length - 1;
+        showRandomQuote();
+    });
+    
+    // Add focus effects
+    quoteTextInput.addEventListener('focus', function() {
+        this.style.boxShadow = '0 0 0 3px rgba(255, 255, 255, 0.3)';
+    });
+    
+    quoteTextInput.addEventListener('blur', function() {
+        this.style.boxShadow = 'none';
+    });
+    
+    categoryInput.addEventListener('focus', function() {
+        this.style.boxShadow = '0 0 0 3px rgba(255, 255, 255, 0.3)';
+    });
+    
+    categoryInput.addEventListener('blur', function() {
+        this.style.boxShadow = 'none';
+    });
+    
+    // Add hover effect to button
+    addButton.addEventListener('mouseenter', function() {
+        this.style.transform = 'translateY(-2px)';
+        this.style.boxShadow = '0 6px 20px rgba(0,0,0,0.3)';
+    });
+    
+    addButton.addEventListener('mouseleave', function() {
+        this.style.transform = 'translateY(0)';
+        this.style.boxShadow = '0 4px 15px rgba(0,0,0,0.2)';
+    });
+    
+    // Add keyboard support
+    quoteTextInput.addEventListener('keydown', function(event) {
+        if (event.code === 'Enter') {
+            categoryInput.focus();
+        }
+    });
+    
+    categoryInput.addEventListener('keydown', function(event) {
+        if (event.code === 'Enter') {
+            addButton.click();
+        }
+    });
+    
+    // Assemble the form
+    formContainer.appendChild(formTitle);
+    formContainer.appendChild(quoteTextInput);
+    formContainer.appendChild(categoryInput);
+    formContainer.appendChild(addButton);
+    
+    // Insert the form after the quote display container
+    const quoteContainer = document.querySelector('.container');
+    if (quoteContainer) {
+        quoteContainer.parentNode.insertBefore(formContainer, quoteContainer.nextSibling);
+    }
+    
+    // Focus on the first input
+    quoteTextInput.focus();
+}
+
 // Function to filter quotes by category
 function filterQuotes() {
     const selectedCategory = categoryFilter.value;
@@ -592,6 +770,7 @@ function displayQuoteWithTypingEffect(quote) {
 window.QuoteGenerator = {
     showRandomQuote,
     addQuote,
+    createAddQuoteForm,
     filterQuotes,
     getQuotes: () => [...quotes],
     getFilteredQuotes: () => [...filteredQuotes]
