@@ -17,7 +17,8 @@ let filteredQuotes = [...quotes];
 const STORAGE_KEYS = {
     QUOTES: 'dynamicQuoteGenerator_quotes',
     LAST_VIEWED: 'dynamicQuoteGenerator_lastViewed',
-    USER_PREFERENCES: 'dynamicQuoteGenerator_preferences'
+    USER_PREFERENCES: 'dynamicQuoteGenerator_preferences',
+    LAST_FILTER: 'dynamicQuoteGenerator_lastFilter'
 };
 
 // DOM elements
@@ -46,6 +47,9 @@ function initializeApp() {
     
     // Initialize category filter
     updateCategoryFilter();
+    
+    // Load and restore last selected filter
+    restoreLastSelectedFilter();
     
     // Update stats
     updateStats();
@@ -125,6 +129,28 @@ function loadLastViewedFromSession() {
     const lastViewed = loadFromSessionStorage(STORAGE_KEYS.LAST_VIEWED);
     if (lastViewed) {
         updateLastViewedDisplay(lastViewed);
+    }
+}
+
+// Function to save the last selected filter to local storage
+function saveLastFilterToLocalStorage(selectedCategory) {
+    try {
+        localStorage.setItem(STORAGE_KEYS.LAST_FILTER, selectedCategory);
+        return true;
+    } catch (error) {
+        console.error('Error saving filter to local storage:', error);
+        return false;
+    }
+}
+
+// Function to load the last selected filter from local storage
+function loadLastFilterFromLocalStorage() {
+    try {
+        const lastFilter = localStorage.getItem(STORAGE_KEYS.LAST_FILTER);
+        return lastFilter || 'all';
+    } catch (error) {
+        console.error('Error loading filter from local storage:', error);
+        return 'all';
     }
 }
 
@@ -566,6 +592,9 @@ function createAddQuoteForm() {
 function filterQuotes() {
     const selectedCategory = categoryFilter.value;
     
+    // Save the selected filter to local storage
+    saveLastFilterToLocalStorage(selectedCategory);
+    
     if (selectedCategory === 'all') {
         filteredQuotes = [...quotes];
     } else {
@@ -600,6 +629,26 @@ function updateCategoryFilter() {
         option.textContent = category;
         categoryFilter.appendChild(option);
     });
+}
+
+// Function to restore the last selected filter from local storage
+function restoreLastSelectedFilter() {
+    const lastFilter = loadLastFilterFromLocalStorage();
+    
+    // Set the category filter to the last selected value
+    if (categoryFilter.value !== lastFilter) {
+        categoryFilter.value = lastFilter;
+        
+        // Apply the filter immediately
+        if (lastFilter === 'all') {
+            filteredQuotes = [...quotes];
+        } else {
+            filteredQuotes = quotes.filter(quote => quote.category === lastFilter);
+        }
+        
+        // Reset current quote index
+        currentQuoteIndex = -1;
+    }
 }
 
 // Function to update statistics
@@ -772,6 +821,9 @@ window.QuoteGenerator = {
     addQuote,
     createAddQuoteForm,
     filterQuotes,
+    restoreLastSelectedFilter,
+    saveLastFilterToLocalStorage,
+    loadLastFilterFromLocalStorage,
     getQuotes: () => [...quotes],
     getFilteredQuotes: () => [...filteredQuotes]
 };
