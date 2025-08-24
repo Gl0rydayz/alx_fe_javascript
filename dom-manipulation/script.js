@@ -32,6 +32,7 @@ const STORAGE_KEYS = {
 };
 
 // Server configuration
+// API endpoint: ["https://jsonplaceholder.typicode.com/posts"]
 const SERVER_CONFIG = {
     BASE_URL: 'https://jsonplaceholder.typicode.com',
     ENDPOINTS: {
