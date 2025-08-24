@@ -132,6 +132,89 @@
         .storage-info div {
             margin: 5px 0;
         }
+        
+        .sync-controls {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .sync-controls button {
+            margin: 5px;
+            min-width: 150px;
+        }
+        
+        .sync-info {
+            margin-top: 15px;
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+        
+        .sync-info div {
+            margin: 5px 0;
+        }
+        
+        .conflict-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            border-radius: 8px;
+        }
+        
+        .conflict-info h4 {
+            margin-top: 0;
+            color: #FF9800;
+        }
+        
+        .conflict-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 193, 7, 0.95);
+            color: #333;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            z-index: 1000;
+            max-width: 300px;
+            animation: slideInRight 0.3s ease-out;
+        }
+        
+        .conflict-content button {
+            background: #FF9800;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+        
+        .conflict-content button:hover {
+            background: #F57C00;
+        }
+        
+        .sync-status {
+            font-weight: bold;
+        }
+        
+        .sync-status.success {
+            color: #4CAF50;
+        }
+        
+        .sync-status.error {
+            color: #f44336;
+        }
+        
+        .sync-status.info {
+            color: #2196F3;
+        }
+        
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
     </style>
 </head>
 <body>
@@ -169,6 +252,49 @@
         <div class="stats">
             <div>Total Quotes: <span id="totalQuotes">0</span></div>
             <div>Categories: <span id="totalCategories">0</span></div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <h3>Server Synchronization</h3>
+        <div class="sync-controls">
+            <button onclick="syncWithServer()" style="background: linear-gradient(45deg, #9C27B0, #7B1FA2);">
+                🔄 Sync Now
+            </button>
+            <button onclick="startPeriodicSync()" style="background: linear-gradient(45deg, #4CAF50, #45a049);">
+                ▶️ Start Auto-Sync
+            </button>
+            <button onclick="stopPeriodicSync()" style="background: linear-gradient(45deg, #FF9800, #F57C00);">
+                ⏸️ Stop Auto-Sync
+            </button>
+        </div>
+        
+        <div class="sync-info">
+            <div>Sync Status: <span id="syncStatus">Ready</span></div>
+            <div>Last Sync: <span id="lastSyncTime">Never</span></div>
+            <div>Auto-Sync: <span id="autoSyncStatus">Active</span></div>
+            <div>
+                Sync Interval: 
+                <select id="syncIntervalSelect" onchange="changeSyncInterval(parseInt(this.value))">
+                    <option value="15000">15 seconds</option>
+                    <option value="30000" selected>30 seconds</option>
+                    <option value="60000">1 minute</option>
+                    <option value="300000">5 minutes</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="conflict-info" id="conflictInfo" style="display: none;">
+            <h4>⚠️ Recent Conflicts</h4>
+            <div id="conflictList"></div>
+            <div style="text-align: center; margin-top: 15px;">
+                <button onclick="clearConflictHistory()" style="background: #FF9800; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 0.9em;">
+                    🗑️ Clear History
+                </button>
+                <button onclick="showSyncStats()" style="background: #2196F3; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 0.9em; margin-left: 10px;">
+                    📊 Sync Stats
+                </button>
+            </div>
         </div>
     </div>
     

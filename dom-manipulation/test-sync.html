@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sync Functionality Test - Dynamic Quote Generator</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        
+        h1, h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .test-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        
+        .test-button {
+            background: linear-gradient(45deg, #2196F3, #1976D2);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+        
+        .test-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        
+        .test-button.success {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+        }
+        
+        .test-button.warning {
+            background: linear-gradient(45deg, #FF9800, #F57C00);
+        }
+        
+        .test-button.danger {
+            background: linear-gradient(45deg, #f44336, #d32f2f);
+        }
+        
+        .test-result {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-online { background-color: #4CAF50; }
+        .status-offline { background-color: #f44336; }
+        .status-syncing { background-color: #FF9800; }
+        
+        .conflict-simulation {
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .quote-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border-left: 4px solid #2196F3;
+        }
+        
+        .quote-item.server {
+            border-left-color: #4CAF50;
+        }
+        
+        .quote-item.conflict {
+            border-left-color: #FF9800;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔄 Server Synchronization Test Suite</h1>
+    <h2>Testing Dynamic Quote Generator Sync Features</h2>
+    
+    <div class="test-section">
+        <h3>📡 Connection Status</h3>
+        <div>
+            <span class="status-indicator" id="connectionStatus"></span>
+            <span id="connectionText">Checking...</span>
+        </div>
+        <div>
+            <strong>Network Status:</strong> <span id="networkStatus">Unknown</span>
+        </div>
+        <div>
+            <strong>Last Sync:</strong> <span id="lastSyncDisplay">Never</span>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h3>🔄 Synchronization Tests</h3>
+        <button class="test-button" onclick="testManualSync()">Test Manual Sync</button>
+        <button class="test-button" onclick="testAutoSync()">Test Auto-Sync Toggle</button>
+        <button class="test-button" onclick="testSyncInterval()">Test Sync Interval</button>
+        <button class="test-button" onclick="testConflictResolution()">Test Conflict Resolution</button>
+        <button class="test-button" onclick="testOfflineHandling()">Test Offline Handling</button>
+        
+        <div class="test-result" id="syncTestResult">Click a test button to see results...</div>
+    </div>
+    
+    <div class="test-section">
+        <h3>📊 Data Analysis</h3>
+        <button class="test-button success" onclick="analyzeData()">Analyze Current Data</button>
+        <button class="test-button" onclick="exportSyncConfig()">Export Sync Config</button>
+        <button class="test-button warning" onclick="simulateConflict()">Simulate Conflict</button>
+        <button class="test-button danger" onclick="clearAllData()">Clear All Data</button>
+        
+        <div class="test-result" id="dataAnalysisResult">Click analyze to see current data state...</div>
+    </div>
+    
+    <div class="test-section">
+        <h3>🔍 Quote Source Analysis</h3>
+        <div id="quoteSourceAnalysis">Click analyze to see quote sources...</div>
+    </div>
+    
+    <div class="test-section">
+        <h3>📝 Test Log</h3>
+        <div class="test-result" id="testLog">Test log will appear here...</div>
+        <button class="test-button" onclick="clearTestLog()">Clear Log</button>
+    </div>
+    
+    <script>
+        // Test logging function
+        function logTest(message) {
+            const logElement = document.getElementById('testLog');
+            const timestamp = new Date().toLocaleTimeString();
+            logElement.textContent += `[${timestamp}] ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+        
+        // Update connection status
+        function updateConnectionStatus() {
+            const statusElement = document.getElementById('connectionStatus');
+            const textElement = document.getElementById('connectionText');
+            const networkElement = document.getElementById('networkStatus');
+            
+            if (navigator.onLine) {
+                statusElement.className = 'status-indicator status-online';
+                textElement.textContent = 'Online';
+                networkElement.textContent = 'Connected';
+            } else {
+                statusElement.className = 'status-indicator status-offline';
+                textElement.textContent = 'Offline';
+                networkElement.textContent = 'Disconnected';
+            }
+        }
+        
+        // Test manual sync
+        async function testManualSync() {
+            logTest('Testing manual sync...');
+            const resultElement = document.getElementById('syncTestResult');
+            
+            try {
+                resultElement.textContent = 'Syncing with server...';
+                
+                // Call the sync function from the main app
+                if (window.syncWithServer) {
+                    await window.syncWithServer();
+                    resultElement.textContent = 'Manual sync completed successfully!';
+                    logTest('Manual sync test passed');
+                } else {
+                    resultElement.textContent = 'Error: syncWithServer function not found';
+                    logTest('Manual sync test failed - function not found');
+                }
+            } catch (error) {
+                resultElement.textContent = `Manual sync failed: ${error.message}`;
+                logTest(`Manual sync test failed: ${error.message}`);
+            }
+        }
+        
+        // Test auto-sync toggle
+        function testAutoSync() {
+            logTest('Testing auto-sync toggle...');
+            const resultElement = document.getElementById('syncTestResult');
+            
+            try {
+                if (window.startPeriodicSync && window.stopPeriodicSync) {
+                    // Get current status
+                    const currentStatus = window.QuoteGenerator.getSyncStatus();
+                    
+                    if (currentStatus.isActive) {
+                        window.stopPeriodicSync();
+                        resultElement.textContent = 'Auto-sync stopped successfully';
+                        logTest('Auto-sync stopped');
+                    } else {
+                        window.startPeriodicSync();
+                        resultElement.textContent = 'Auto-sync started successfully';
+                        logTest('Auto-sync started');
+                    }
+                } else {
+                    resultElement.textContent = 'Error: Auto-sync functions not found';
+                    logTest('Auto-sync test failed - functions not found');
+                }
+            } catch (error) {
+                resultElement.textContent = `Auto-sync test failed: ${error.message}`;
+                logTest(`Auto-sync test failed: ${error.message}`);
+            }
+        }
+        
+        // Test sync interval
+        function testSyncInterval() {
+            logTest('Testing sync interval change...');
+            const resultElement = document.getElementById('syncTestResult');
+            
+            try {
+                if (window.changeSyncInterval) {
+                    // Test changing to 15 seconds
+                    const success = window.changeSyncInterval(15000);
+                    if (success) {
+                        resultElement.textContent = 'Sync interval changed to 15 seconds successfully';
+                        logTest('Sync interval test passed');
+                    } else {
+                        resultElement.textContent = 'Failed to change sync interval';
+                        logTest('Sync interval test failed');
+                    }
+                } else {
+                    resultElement.textContent = 'Error: changeSyncInterval function not found';
+                    logTest('Sync interval test failed - function not found');
+                }
+            } catch (error) {
+                resultElement.textContent = `Sync interval test failed: ${error.message}`;
+                logTest(`Sync interval test failed: ${error.message}`);
+            }
+        }
+        
+        // Test conflict resolution
+        function testConflictResolution() {
+            logTest('Testing conflict resolution...');
+            const resultElement = document.getElementById('syncTestResult');
+            
+            try {
+                if (window.getSyncStatistics) {
+                    const stats = window.getSyncStatistics();
+                    resultElement.textContent = `Conflict resolution test:\nConflicts resolved: ${stats.conflictsResolved}\nTotal quotes: ${stats.totalQuotes}\nServer quotes: ${stats.serverQuotes}`;
+                    logTest(`Conflict resolution test completed. Conflicts: ${stats.conflictsResolved}`);
+                } else {
+                    resultElement.textContent = 'Error: getSyncStatistics function not found';
+                    logTest('Conflict resolution test failed - function not found');
+                }
+            } catch (error) {
+                resultElement.textContent = `Conflict resolution test failed: ${error.message}`;
+                logTest(`Conflict resolution test failed: ${error.message}`);
+            }
+        }
+        
+        // Test offline handling
+        function testOfflineHandling() {
+            logTest('Testing offline handling...');
+            const resultElement = document.getElementById('syncTestResult');
+            
+            resultElement.textContent = 'Offline handling test:\nThis test simulates offline behavior.\nCheck the console for offline sync attempts.';
+            logTest('Offline handling test initiated');
+            
+            // Simulate offline behavior by temporarily disabling network
+            const originalFetch = window.fetch;
+            window.fetch = function() {
+                return Promise.reject(new Error('Simulated offline state'));
+            };
+            
+            // Try to sync (should fail gracefully)
+            setTimeout(() => {
+                if (window.syncWithServer) {
+                    window.syncWithServer().catch(() => {
+                        logTest('Offline sync test completed - sync failed gracefully as expected');
+                    });
+                }
+                
+                // Restore fetch after 3 seconds
+                setTimeout(() => {
+                    window.fetch = originalFetch;
+                    logTest('Network restored');
+                }, 3000);
+            }, 1000);
+        }
+        
+        // Analyze current data
+        function analyzeData() {
+            logTest('Analyzing current data...');
+            const resultElement = document.getElementById('dataAnalysisResult');
+            
+            try {
+                if (window.getSyncStatistics) {
+                    const stats = window.getSyncStatistics();
+                    const quotes = window.QuoteGenerator.getQuotes();
+                    
+                    let analysis = `📊 Data Analysis Results:\n\n`;
+                    analysis += `Total Quotes: ${stats.totalQuotes}\n`;
+                    analysis += `Local Quotes: ${stats.localQuotes}\n`;
+                    analysis += `Server Quotes: ${stats.serverQuotes}\n`;
+                    analysis += `Conflicts Resolved: ${stats.conflictsResolved}\n`;
+                    analysis += `Last Sync: ${stats.lastSync ? new Date(stats.lastSync).toLocaleString() : 'Never'}\n`;
+                    analysis += `Auto-Sync: ${stats.autoSyncActive ? 'Active' : 'Stopped'}\n\n`;
+                    
+                    // Quote breakdown by source
+                    const sourceBreakdown = {};
+                    quotes.forEach(quote => {
+                        const source = quote.source || 'local';
+                        sourceBreakdown[source] = (sourceBreakdown[source] || 0) + 1;
+                    });
+                    
+                    analysis += `📝 Quote Sources:\n`;
+                    Object.entries(sourceBreakdown).forEach(([source, count]) => {
+                        analysis += `${source}: ${count}\n`;
+                    });
+                    
+                    resultElement.textContent = analysis;
+                    logTest('Data analysis completed');
+                } else {
+                    resultElement.textContent = 'Error: Analysis functions not found';
+                    logTest('Data analysis failed - functions not found');
+                }
+            } catch (error) {
+                resultElement.textContent = `Data analysis failed: ${error.message}`;
+                logTest(`Data analysis failed: ${error.message}`);
+            }
+        }
+        
+        // Export sync configuration
+        function exportSyncConfig() {
+            logTest('Exporting sync configuration...');
+            
+            try {
+                if (window.exportSyncConfiguration) {
+                    window.exportSyncConfiguration();
+                    logTest('Sync configuration exported successfully');
+                } else {
+                    logTest('Export failed - function not found');
+                }
+            } catch (error) {
+                logTest(`Export failed: ${error.message}`);
+            }
+        }
+        
+        // Simulate conflict
+        function simulateConflict() {
+            logTest('Simulating conflict...');
+            const resultElement = document.getElementById('dataAnalysisResult');
+            
+            try {
+                // This would require access to the internal conflict simulation
+                resultElement.textContent = 'Conflict simulation:\nThis would require internal access to the conflict system.\nConflicts are automatically detected during sync operations.';
+                logTest('Conflict simulation test completed');
+            } catch (error) {
+                resultElement.textContent = `Conflict simulation failed: ${error.message}`;
+                logTest(`Conflict simulation failed: ${error.message}`);
+            }
+        }
+        
+        // Clear all data
+        function clearAllData() {
+            logTest('Clearing all data...');
+            
+            if (confirm('Are you sure you want to clear all data? This cannot be undone.')) {
+                try {
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    location.reload();
+                    logTest('All data cleared and page reloaded');
+                } catch (error) {
+                    logTest(`Data clear failed: ${error.message}`);
+                }
+            } else {
+                logTest('Data clear cancelled by user');
+            }
+        }
+        
+        // Analyze quote sources
+        function analyzeQuoteSources() {
+            const analysisElement = document.getElementById('quoteSourceAnalysis');
+            
+            try {
+                const quotes = window.QuoteGenerator.getQuotes();
+                const sourceBreakdown = {};
+                
+                quotes.forEach(quote => {
+                    const source = quote.source || 'local';
+                    if (!sourceBreakdown[source]) {
+                        sourceBreakdown[source] = [];
+                    }
+                    sourceBreakdown[source].push(quote);
+                });
+                
+                let html = '<h4>Quote Sources Breakdown:</h4>';
+                
+                Object.entries(sourceBreakdown).forEach(([source, sourceQuotes]) => {
+                    html += `<div class="quote-item ${source.startsWith('server') ? 'server' : ''}">`;
+                    html += `<strong>${source} (${sourceQuotes.length}):</strong><br>`;
+                    sourceQuotes.slice(0, 3).forEach(quote => {
+                        html += `• "${quote.text}" (${quote.category})<br>`;
+                    });
+                    if (sourceQuotes.length > 3) {
+                        html += `... and ${sourceQuotes.length - 3} more<br>`;
+                    }
+                    html += '</div>';
+                });
+                
+                analysisElement.innerHTML = html;
+            } catch (error) {
+                analysisElement.innerHTML = `<p>Error analyzing quote sources: ${error.message}</p>`;
+            }
+        }
+        
+        // Clear test log
+        function clearTestLog() {
+            document.getElementById('testLog').textContent = '';
+            logTest('Test log cleared');
+        }
+        
+        // Initialize test page
+        function initializeTestPage() {
+            logTest('Test page initialized');
+            updateConnectionStatus();
+            
+            // Update connection status every 5 seconds
+            setInterval(updateConnectionStatus, 5000);
+            
+            // Update last sync display
+            function updateLastSyncDisplay() {
+                const lastSyncElement = document.getElementById('lastSyncDisplay');
+                if (window.QuoteGenerator && window.QuoteGenerator.getSyncStatus) {
+                    const status = window.QuoteGenerator.getSyncStatus();
+                    if (status.lastSync) {
+                        const timeAgo = getTimeAgo(new Date(status.lastSync));
+                        lastSyncElement.textContent = timeAgo;
+                    } else {
+                        lastSyncElement.textContent = 'Never';
+                    }
+                }
+            }
+            
+            // Helper function for time ago
+            function getTimeAgo(date) {
+                const now = new Date();
+                const diffInSeconds = Math.floor((now - date) / 1000);
+                
+                if (diffInSeconds < 60) return 'just now';
+                if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+                if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+                return `${Math.floor(diffInSeconds / 86400)}d ago`;
+            }
+            
+            // Update last sync display every 10 seconds
+            setInterval(updateLastSyncDisplay, 10000);
+            updateLastSyncDisplay();
+            
+            // Auto-analyze quote sources every 30 seconds
+            setInterval(analyzeQuoteSources, 30000);
+            analyzeQuoteSources();
+        }
+        
+        // Wait for main app to load
+        function waitForMainApp() {
+            if (window.QuoteGenerator && window.syncWithServer) {
+                initializeTestPage();
+            } else {
+                setTimeout(waitForMainApp, 100);
+            }
+        }
+        
+        // Start waiting for main app
+        waitForMainApp();
+    </script>
+</body>
+</html>
