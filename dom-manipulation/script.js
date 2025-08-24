@@ -631,6 +631,28 @@ function updateCategoryFilter() {
     });
 }
 
+// Function to populate categories in the filter dropdown
+function populateCategories() {
+    // Get unique categories from quotes
+    const categories = [...new Set(quotes.map(quote => quote.category))];
+    
+    // Clear existing options except "All Categories"
+    const allOption = categoryFilter.querySelector('option[value="all"]');
+    categoryFilter.innerHTML = '';
+    categoryFilter.appendChild(allOption);
+    
+    // Add category options
+    categories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category;
+        option.textContent = category;
+        categoryFilter.appendChild(option);
+    });
+    
+    // Update stats to reflect current categories
+    updateStats();
+}
+
 // Function to restore the last selected filter from local storage
 function restoreLastSelectedFilter() {
     const lastFilter = loadLastFilterFromLocalStorage();
@@ -821,6 +843,7 @@ window.QuoteGenerator = {
     addQuote,
     createAddQuoteForm,
     filterQuotes,
+    populateCategories,
     restoreLastSelectedFilter,
     saveLastFilterToLocalStorage,
     loadLastFilterFromLocalStorage,
