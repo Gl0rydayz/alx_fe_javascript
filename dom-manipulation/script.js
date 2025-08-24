@@ -718,7 +718,7 @@ function importFromJsonFile(event) {
     
     const fileReader = new FileReader();
     
-    fileReader.onload = function(e) {
+    fileReader.onload = async function(e) {
         try {
             const importedQuotes = JSON.parse(e.target.result);
             
@@ -751,6 +751,20 @@ function importFromJsonFile(event) {
             // Save to local storage
             saveQuotesToLocalStorage();
             
+            // Post imported quotes to server
+            let postedCount = 0;
+            let failedCount = 0;
+            
+            for (const quote of validQuotes) {
+                try {
+                    await postQuoteToServer(quote);
+                    postedCount++;
+                } catch (error) {
+                    failedCount++;
+                    console.error(`Failed to post quote to server:`, error);
+                }
+            }
+            
             // Update UI
             updateCategoryFilter();
             updateStats();
@@ -758,7 +772,11 @@ function importFromJsonFile(event) {
             // Clear file input
             event.target.value = '';
             
-            displayMessage(`${validQuotes.length} quotes imported successfully!`, 'success');
+            if (failedCount > 0) {
+                displayMessage(`${postedCount} quotes imported and synced to server. ${failedCount} failed to sync.`, 'warning');
+            } else {
+                displayMessage(`${validQuotes.length} quotes imported and synced to server successfully!`, 'success');
+            }
             
             // Show the first imported quote
             if (validQuotes.length > 0) {
@@ -886,6 +904,34 @@ function showRandomQuote() {
     }, 500);
 }
 
+// Function to post quote to server
+async function postQuoteToServer(quote) {
+    try {
+        const response = await fetch(`${SERVER_CONFIG.BASE_URL}${SERVER_CONFIG.ENDPOINTS.QUOTES}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                title: quote.text,
+                body: quote.category,
+                userId: 1
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log('Quote posted to server successfully:', result);
+        return result;
+    } catch (error) {
+        console.error('Error posting quote to server:', error);
+        throw error;
+    }
+}
+
 function addQuote() {
     const text = newQuoteText.value.trim();
     const category = newQuoteCategory.value.trim();
@@ -908,6 +954,15 @@ function addQuote() {
     
     // Save to local storage
     saveQuotesToLocalStorage();
+    
+    // Post to server
+    postQuoteToServer(newQuote)
+        .then(() => {
+            displayMessage('Quote added and synced to server successfully!', 'success');
+        })
+        .catch((error) => {
+            displayMessage('Quote added locally but failed to sync to server', 'warning');
+        });
     
     // Clear form inputs
     newQuoteText.value = '';
@@ -1029,6 +1084,15 @@ function createAddQuoteForm() {
         
         // Save to local storage
         saveQuotesToLocalStorage();
+        
+        // Post to server
+        postQuoteToServer(newQuote)
+            .then(() => {
+                displayMessage('Quote added and synced to server successfully!', 'success');
+            })
+            .catch((error) => {
+                displayMessage('Quote added locally but failed to sync to server', 'warning');
+            });
         
         // Clear form inputs
         quoteTextInput.value = '';
@@ -1366,6 +1430,7 @@ window.QuoteGenerator = {
     loadLastFilterFromLocalStorage,
     getQuotes: () => [...quotes],
     getFilteredQuotes: () => [...filteredQuotes],
+    postQuoteToServer,
     syncWithServer,
     startPeriodicSync,
     stopPeriodicSync,
@@ -1385,6 +1450,7 @@ window.QuoteGenerator = {
 window.syncWithServer = syncWithServer;
 window.startPeriodicSync = startPeriodicSync;
 window.stopPeriodicSync = stopPeriodicSync;
+window.postQuoteToServer = postQuoteToServer;
 window.clearConflictHistory = clearConflictHistory;
 window.viewConflictDetails = viewConflictDetails;
 window.showSyncStats = showSyncStats;
