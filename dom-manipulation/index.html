@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Quote Generator</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        
+        #quoteDisplay {
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 1.2em;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        
+        .quote-text {
+            font-style: italic;
+            font-size: 1.3em;
+            margin-bottom: 10px;
+        }
+        
+        .quote-category {
+            font-size: 0.9em;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        button {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            margin: 5px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 5px 0;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+        }
+        
+        input:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .category-selector {
+            margin-bottom: 20px;
+        }
+        
+        .category-selector select {
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            font-size: 1em;
+            margin-right: 10px;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+        
+        .data-management {
+            text-align: center;
+        }
+        
+        .data-management button {
+            margin: 5px;
+            min-width: 180px;
+        }
+        
+        .storage-info {
+            margin-top: 15px;
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+        
+        .storage-info div {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Dynamic Quote Generator</h1>
+    
+    <div class="container">
+        <div id="quoteDisplay">
+            <div>Click "Show New Quote" to get started!</div>
+        </div>
+        
+        <div style="text-align: center;">
+            <button id="newQuote">Show New Quote</button>
+        </div>
+        
+        <div class="category-selector">
+            <label for="categoryFilter">Filter by Category:</label>
+            <select id="categoryFilter">
+                <option value="all">All Categories</option>
+            </select>
+        </div>
+    </div>
+    
+    <div class="container">
+        <h3>Add New Quote</h3>
+        <div class="form-group">
+            <input id="newQuoteText" type="text" placeholder="Enter a new quote" />
+        </div>
+        <div class="form-group">
+            <input id="newQuoteCategory" type="text" placeholder="Enter quote category" />
+        </div>
+        <button onclick="addQuote()">Add Quote</button>
+    </div>
+    
+    <div class="container">
+        <div class="stats">
+            <div>Total Quotes: <span id="totalQuotes">0</span></div>
+            <div>Categories: <span id="totalCategories">0</span></div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <h3>Data Management</h3>
+        <div class="data-management">
+            <button onclick="exportToJson()" style="background: linear-gradient(45deg, #4CAF50, #45a049);">
+                📤 Export Quotes (JSON)
+            </button>
+            <button onclick="document.getElementById('importFile').click()" style="background: linear-gradient(45deg, #2196F3, #1976D2);">
+                📥 Import Quotes (JSON)
+            </button>
+            <button onclick="clearAllQuotes()" style="background: linear-gradient(45deg, #f44336, #d32f2f);">
+                🗑️ Clear All Quotes
+            </button>
+        </div>
+        <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importFromJsonFile(event)" />
+        
+        <div class="storage-info">
+            <div>Storage Status: <span id="storageStatus">Checking...</span></div>
+            <div>Last Viewed: <span id="lastViewed">None</span></div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
