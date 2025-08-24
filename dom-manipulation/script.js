@@ -245,6 +245,9 @@ async function syncWithServer() {
         
         updateSyncStatus(`Sync completed at ${new Date().toLocaleTimeString()}`, 'success');
         
+        // Display success message for quotes synced
+        displayMessage('Quotes synced with server!', 'success');
+        
         // Update UI
         updateCategoryFilter();
         updateStats();
