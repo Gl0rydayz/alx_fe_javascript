@@ -159,6 +159,21 @@ function loadFromSessionStorage(key) {
 
 // Server Synchronization Functions
 
+function syncQuotes() {
+    // This function synchronizes quotes between local storage and server
+    // It's a wrapper function that calls the main sync functionality
+    
+    if (navigator.onLine) {
+        // If online, perform full server sync
+        return syncWithServer();
+    } else {
+        // If offline, just sync local storage
+        updateSyncStatus('Offline - syncing local storage only', 'warning');
+        saveQuotesToLocalStorage();
+        return Promise.resolve();
+    }
+}
+
 async function fetchQuotesFromServer(retryCount = 0) {
     try {
         const response = await fetch(`${SERVER_CONFIG.BASE_URL}${SERVER_CONFIG.ENDPOINTS.QUOTES}`);
@@ -1431,6 +1446,7 @@ window.QuoteGenerator = {
     getQuotes: () => [...quotes],
     getFilteredQuotes: () => [...filteredQuotes],
     postQuoteToServer,
+    syncQuotes,
     syncWithServer,
     startPeriodicSync,
     stopPeriodicSync,
@@ -1447,6 +1463,7 @@ window.QuoteGenerator = {
 };
 
 // Make sync functions globally accessible for HTML onclick handlers
+window.syncQuotes = syncQuotes;
 window.syncWithServer = syncWithServer;
 window.startPeriodicSync = startPeriodicSync;
 window.stopPeriodicSync = stopPeriodicSync;
